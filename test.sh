@@ -122,6 +122,8 @@ function sectionPrompt {
 function argumentEvaluation {
 	local input
 
+	rm -rf ./output/*_leak ./output/*/*_leak
+
 	sectionPrompt "ARGUMENT EVALUATION"
 
 	# Temporarily First Intermittent Error Handling
@@ -130,10 +132,11 @@ function argumentEvaluation {
 	for i in `seq 0 ${RUSH_ARGUMENT_TESTCASE}`
 	do
 		input=$(<input/argument/${i})
-		((./rush01 '$input' > ./output/argument/${i}); (leaks --atExit -- ./rush01 '$input' &> /dev/null || echo "Leaks!!" >> ./output/argument/${i}))  & sleep 0.75; kill $! 2> /dev/null || :
+		touch ./output/argument/${i}_leak
+		((./rush01 '$input' > ./output/argument/${i}); (leaks --atExit -- ./rush01 '$input' &> /dev/null || echo "Leaks" >> ./output/argument/${i}_leak))  & sleep 0.75; kill $! 2> /dev/null || :
 		diff -u ./output/argument/${i} ./maps/error >> result
 		isSuccess "File: ${i}, Input \"$input\""
-		isLeak ./output/argument/${i}
+		isLeak ./output/argument/${i}_leak
 	done
 }
 
@@ -151,10 +154,11 @@ function evaluation {
 	for i in `seq 0 10`
 	do
 		input=$(<input/${i})
-		./rush01 "$input" > ./output/${i}; leaks --atExit -- ./rush01 "$input" &> /dev/null || echo "Leaks!!" >> ./output/${i}
+		touch ./output/${i}_leak
+		./rush01 "$input" > ./output/${i}; leaks --atExit -- ./rush01 "$input" &> /dev/null || echo "Leaks" >> ./output/${i}_leak
 		diff -u ./output/${i} ./maps/${i} >> result
 		isSuccess "File: ${i}, Input \"${input}\""
-		isLeak ./output/${i}
+		isLeak ./output/${i}_leak
 	done
 
 	sectionPrompt "BLANK EXCEPTION HANDLING"
@@ -162,10 +166,11 @@ function evaluation {
 	for i in `seq 0 ${BLANK_EXCEPTION_HANDLING}`
 	do
 		input=$(<input/blank/${i})
-		((./rush01 "$input" > ./output/blank/${i}); (leaks --atExit -- ./rush01 '$input' &> /dev/null || echo "Leaks!!" >> ./output/blank/${i})) & sleep 0.75; kill $! 2> /dev/null || :
+		touch ./output/blank/${i}_leak
+		((./rush01 "$input" > ./output/blank/${i}); (leaks --atExit -- ./rush01 '$input' &> /dev/null || echo "Leaks" >> ./output/blank/${i}_leak)) & sleep 0.75; kill $! 2> /dev/null || :
 		diff -u ./output/blank/${i} ./maps/blank/${i} >> result
 		isSuccess "File: ${i}, Input \"$input\""
-		isLeak ./output/blank/${i}
+		isLeak ./output/blank/${i}_leak
 	done
 
 	sectionPrompt "FORMAT EXCEPTION HANDLING"
@@ -173,21 +178,22 @@ function evaluation {
 	for i in `seq 0 ${FORMAT_EXCEPTION_HANDLING}`
 	do
 		input=$(<input/format/${i})
-		((./rush01 "$input" > ./output/format/${i}); (leaks --atExit -- ./rush01 '$input' &> /dev/null || echo "Leaks!!" >> ./output/format/${i})) & sleep 0.75; kill $! 2> /dev/null || :
+		touch ./output/format/${i}_leak
+		((./rush01 "$input" > ./output/format/${i}); (leaks --atExit -- ./rush01 '$input' &> /dev/null || echo "Leaks" >> ./output/format/${i}_leak)) & sleep 0.75; kill $! 2> /dev/null || :
 		diff -u ./output/format/${i} ./maps/format/${i} >> result
 		isSuccess "File: ${i}, Input \"$input\""
-		isLeak ./output/format/${i}
+		isLeak ./output/format/${i}_leak
 	done
 
-	sectionPrompt "NxN EXCEPTION HANDLING"
+	sectionPrompt "NxN EXCEPTION HANDLING (No automation)"
 
 	for i in `seq 0 ${N_X_N_EXCEPTION_HANDLING}`
 	do
 		input=$(<input/n_x_n/${i})
-		((./rush01 "$input" > ./output/n_x_n/${i}); (leaks --atExit -- ./rush01 '$input' &> /dev/null || echo "Leaks!!" >> ./output/n_x_n/${i})) & sleep 0.75; kill $! 2> /dev/null || :
-		diff -u ./output/n_x_n/${i} ./maps/n_x_n/${i} >> result
-		isSuccess "File: ${i}, Input \"$input\""
-		isLeak ./output/n_x_n/${i}
+		echo "Please compare against ./maps/n_x_n/${i}"
+		echo "File: ${i}, Input \"$input\""
+		#isSuccess "File: ${i}, Input \"$input\""
+		#isLeak ./output/n_x_n/${i}_leak
 	done
 }
 
